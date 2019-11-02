@@ -16,6 +16,10 @@ class UserController {
       email
     });
   }
+
+  async update(req, res) {
+    return res.json({ ok: 'Ok!' });
+  }
 }
 
 export default new UserController();
