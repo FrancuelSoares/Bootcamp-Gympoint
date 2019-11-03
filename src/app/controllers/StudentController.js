@@ -12,8 +12,12 @@ class StudentController {
       age: Yup.number()
         .required()
         .min(10),
-      weight: Yup.number().required(),
-      height: Yup.number().required()
+      weight: Yup.number()
+        .required()
+        .positive(),
+      height: Yup.number()
+        .required()
+        .positive()
     });
 
     if (!(await schema.isValid(req.body))) {
@@ -44,7 +48,47 @@ class StudentController {
   }
 
   async update(req, res) {
-    return res.json({ ok: 'Ok!' });
+    const schema = Yup.object().shape({
+      name: Yup.string(),
+      email: Yup.string().email(),
+      age: Yup.number().min(10),
+      weight: Yup.number().positive(),
+      height: Yup.number().positive()
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails.' });
+    }
+
+    const { email } = req.body;
+
+    const student = await Student.findByPk(req.params.id);
+
+    if (!student) {
+      return res.status(400).json({ error: 'Student does not exist.' });
+    }
+
+    if (email && email !== student.email) {
+      const studentExists = await Student.findOne({
+        attributes: ['id'],
+        where: { email }
+      });
+
+      if (studentExists) {
+        return res.status(400).json({ error: 'Student already exists.' });
+      }
+    }
+
+    const { id, name, age, weight, height } = await student.update(req.body);
+
+    return res.json({
+      id,
+      name,
+      email,
+      age,
+      weight,
+      height
+    });
   }
 }
 
