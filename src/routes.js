@@ -12,7 +12,7 @@ const routes = new Router();
 // Session
 routes.post('/sessions', SessionController.store);
 
-// Middlewares
+// Middleware Auth
 routes.use(authMiddleare);
 
 // User
