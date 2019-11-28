@@ -82,11 +82,50 @@ class EnrollmentController {
   }
 
   async update(req, res) {
+    const schema = Yup.object().shape({
+      student_id: Yup.number(),
+      plan_id: Yup.number(),
+      start_date: Yup.date()
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails.' });
+    }
+
     return res.json();
+
+    // const plan = await Plan.findByPk(req.params.id);
+
+    // if (!plan) {
+    //   return res.status(400).json({ error: 'Plan does not exist.' });
+    // }
+
+    // const { id, title, duration, price } = await plan.update(req.body);
+
+    // return res.json({
+    //   id,
+    //   title,
+    //   duration,
+    //   price
+    // });
   }
 
   async delete(req, res) {
-    return res.json();
+    const schema = Yup.object().shape({
+      id: Yup.number().required()
+    });
+
+    if (!(await schema.isValid(req.params))) {
+      return res.status(400).json({ error: 'Validation fails.' });
+    }
+
+    const enrollment = await Enrollment.destroy({
+      where: {
+        id: req.params.id
+      }
+    });
+
+    return res.json(enrollment);
   }
 }
 
