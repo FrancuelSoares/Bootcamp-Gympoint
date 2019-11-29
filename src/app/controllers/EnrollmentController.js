@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore, addMonths } from 'date-fns';
+import { parseISO, isBefore, addMonths } from 'date-fns';
 
 import Enrollment from '../models/Enrollment';
 import Student from '../models/Student';
@@ -51,6 +51,23 @@ class EnrollmentController {
 
     const { student_id, plan_id, start_date } = req.body;
 
+    // Check for past Dates
+    const date = parseISO(start_date);
+
+    if (isBefore(date, new Date())) {
+      return res.status(400).json({ error: 'Past dates are not permitted.' });
+    }
+
+    // Check Student
+    const student = await Student.findOne({
+      attributes: ['id', 'name'],
+      where: { id: student_id }
+    });
+
+    if (!student) {
+      return res.status(400).json({ error: 'Student does not exist.' });
+    }
+
     // Check Plan
     const plan = await Plan.findOne({
       attributes: ['id', 'duration', 'price'],
@@ -59,13 +76,6 @@ class EnrollmentController {
 
     if (!plan) {
       return res.status(400).json({ error: 'Plan does not exist.' });
-    }
-
-    // Check for past Dates
-    const date = parseISO(start_date);
-
-    if (isBefore(date, new Date())) {
-      return res.status(400).json({ error: 'Past dates are not permitted.' });
     }
 
     const end_date = addMonths(date, plan.duration);
@@ -83,31 +93,59 @@ class EnrollmentController {
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      student_id: Yup.number(),
-      plan_id: Yup.number(),
-      start_date: Yup.date()
+      student_id: Yup.number().required(),
+      plan_id: Yup.number().required(),
+      start_date: Yup.date().required()
     });
 
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails.' });
     }
 
-    return res.json();
+    // Check Enrollment
+    const enrollment = await Enrollment.findByPk(req.params.id);
 
-    // const plan = await Plan.findByPk(req.params.id);
+    if (!enrollment) {
+      return res.status(400).json({ error: 'Enrollment does not exist.' });
+    }
 
-    // if (!plan) {
-    //   return res.status(400).json({ error: 'Plan does not exist.' });
-    // }
+    // Check Student
+    const student = await Student.findOne({
+      attributes: ['id', 'name'],
+      where: { id: req.body.student_id }
+    });
 
-    // const { id, title, duration, price } = await plan.update(req.body);
+    if (!student) {
+      return res.status(400).json({ error: 'Student does not exist.' });
+    }
 
-    // return res.json({
-    //   id,
-    //   title,
-    //   duration,
-    //   price
-    // });
+    // Check Plan
+    const plan = await Plan.findOne({
+      attributes: ['id', 'duration', 'price'],
+      where: { id: req.body.plan_id }
+    });
+
+    if (!plan) {
+      return res.status(400).json({ error: 'Plan does not exist.' });
+    }
+
+    // Check for past Dates
+    const date = parseISO(req.body.start_date);
+
+    if (date !== enrollment.start_date) {
+      if (isBefore(date, new Date())) {
+        return res.status(400).json({ error: 'Past dates are not permitted.' });
+      }
+    }
+
+    // Last Check
+    req.body.start_date = date;
+    req.body.end_date = addMonths(date, plan.duration);
+    req.body.price = plan.price;
+
+    const updated = await enrollment.update(req.body);
+
+    return res.json(updated);
   }
 
   async delete(req, res) {
