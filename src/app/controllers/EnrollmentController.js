@@ -1,5 +1,8 @@
 import * as Yup from 'yup';
-import { parseISO, isBefore, addMonths } from 'date-fns';
+import { format, parseISO, isBefore, addMonths } from 'date-fns';
+import pt from 'date-fns/locale/pt';
+
+import Mail from '../../lib/Mail';
 
 import Enrollment from '../models/Enrollment';
 import Student from '../models/Student';
@@ -60,7 +63,7 @@ class EnrollmentController {
 
     // Check Student
     const student = await Student.findOne({
-      attributes: ['id', 'name'],
+      attributes: ['id', 'name', 'email'],
       where: { id: student_id }
     });
 
@@ -70,7 +73,7 @@ class EnrollmentController {
 
     // Check Plan
     const plan = await Plan.findOne({
-      attributes: ['id', 'duration', 'price'],
+      attributes: ['id', 'title', 'duration', 'price'],
       where: { id: plan_id }
     });
 
@@ -86,6 +89,32 @@ class EnrollmentController {
       start_date: date,
       end_date,
       price: plan.price
+    });
+
+    // Send Email
+    await Mail.sendMail({
+      to: `${student.name} <${student.email}>`,
+      subject: 'Matrícula Cadastrada',
+      template: 'enrollment',
+      context: {
+        student: student.name,
+        plan: plan.title,
+        price: plan.price,
+        start_date: format(
+          enrollment.start_date,
+          "'dia' dd 'de' MMMM', às' H:mm'h'",
+          {
+            locale: pt
+          }
+        ),
+        end_date: format(
+          enrollment.end_date,
+          "'dia' dd 'de' MMMM', às' H:mm'h'",
+          {
+            locale: pt
+          }
+        )
+      }
     });
 
     return res.json(enrollment);
