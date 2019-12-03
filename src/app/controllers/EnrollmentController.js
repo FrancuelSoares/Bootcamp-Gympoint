@@ -1,8 +1,8 @@
 import * as Yup from 'yup';
 import { format, parseISO, isBefore, addMonths } from 'date-fns';
-import pt from 'date-fns/locale/pt';
 
-import Mail from '../../lib/Mail';
+import Queue from '../../lib/Queue';
+import RegisterEnrollmenteEmail from '../jobs/RegisterEnrollmenteEmail';
 
 import Enrollment from '../models/Enrollment';
 import Student from '../models/Student';
@@ -91,30 +91,15 @@ class EnrollmentController {
       price: plan.price
     });
 
-    // Send Email
-    await Mail.sendMail({
-      to: `${student.name} <${student.email}>`,
-      subject: 'Matrícula Cadastrada',
-      template: 'enrollment',
-      context: {
-        student: student.name,
-        plan: plan.title,
-        price: plan.price,
-        start_date: format(
-          enrollment.start_date,
-          "'dia' dd 'de' MMMM', às' H:mm'h'",
-          {
-            locale: pt
-          }
-        ),
-        end_date: format(
-          enrollment.end_date,
-          "'dia' dd 'de' MMMM', às' H:mm'h'",
-          {
-            locale: pt
-          }
-        )
-      }
+    /**
+     * Send Email
+     *
+     * Adding in Background Job
+     */
+    await Queue.add(RegisterEnrollmenteEmail.key, {
+      student,
+      plan,
+      enrollment
     });
 
     return res.json(enrollment);
