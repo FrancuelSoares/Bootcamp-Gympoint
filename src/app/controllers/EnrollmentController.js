@@ -58,7 +58,7 @@ class EnrollmentController {
     const date = parseISO(start_date);
 
     if (isBefore(date, new Date())) {
-      return res.status(400).json({ error: 'Past dates are not permitted.' });
+      return res.status(401).json({ error: 'Past dates are not permitted.' });
     }
 
     // Check Student

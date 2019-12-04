@@ -75,7 +75,7 @@ class StudentController {
       });
 
       if (studentExists) {
-        return res.status(400).json({ error: 'Student already exists.' });
+        return res.status(401).json({ error: 'Student already exists.' });
       }
     }
 
