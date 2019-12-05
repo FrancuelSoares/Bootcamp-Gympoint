@@ -53,6 +53,16 @@ class CheckinController {
       return res.status(400).json({ error: 'Validation fails.' });
     }
 
+    // Check Student
+    const student = await Student.findOne({
+      attributes: ['id', 'name', 'email'],
+      where: { id: req.params.id }
+    });
+
+    if (!student) {
+      return res.status(400).json({ error: 'Student does not exist.' });
+    }
+
     // Check total checkins
     const checkins_count = await Checkin.count({
       where: {

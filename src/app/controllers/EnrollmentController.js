@@ -93,8 +93,7 @@ class EnrollmentController {
 
     /**
      * Send Email
-     *
-     * Adding in Background Job
+     * - Adding in Background Job
      */
     await Queue.add(RegisterEnrollmenteEmail.key, {
       student,
