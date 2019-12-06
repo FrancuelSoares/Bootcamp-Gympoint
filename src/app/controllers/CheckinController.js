@@ -1,10 +1,11 @@
 import * as Yup from 'yup';
 
-import { subDays } from 'date-fns';
+import { isAfter, subDays } from 'date-fns';
 import { Op } from 'sequelize';
 
 import Checkin from '../models/Checkin';
 import Student from '../models/Student';
+import Enrollment from '../models/Enrollment';
 
 class CheckinController {
   async index(req, res) {
@@ -61,6 +62,27 @@ class CheckinController {
 
     if (!student) {
       return res.status(400).json({ error: 'Student does not exist.' });
+    }
+
+    // Check Enrollment
+    const enrollment = await Enrollment.findOne({
+      attributes: ['id', 'end_date'],
+      include: [
+        {
+          model: Student,
+          as: 'student',
+          attributes: ['id']
+        }
+      ],
+      limit: 1
+    });
+
+    if (!enrollment) {
+      return res.status(400).json({ error: 'Enrollment does not exist.' });
+    }
+
+    if (!isAfter(enrollment.end_date, new Date())) {
+      return res.status(401).json({ error: 'Enrollment expired.' });
     }
 
     // Check total checkins

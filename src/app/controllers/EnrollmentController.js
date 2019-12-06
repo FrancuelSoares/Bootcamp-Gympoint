@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-import { format, parseISO, isBefore, addMonths } from 'date-fns';
+import { parseISO, isBefore, addMonths } from 'date-fns';
 
 import Queue from '../../lib/Queue';
 import RegisterEnrollmenteEmail from '../jobs/RegisterEnrollmenteEmail';
