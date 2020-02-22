@@ -66,8 +66,8 @@ class HelpOrderController {
       !(await schemaParams.isValid(req.params)) ||
       !(await schemaBody.isValid(req.body))
     ) {
-      console.log(req.params);
-      console.log(req.body);
+      // console.log(req.params);
+      // console.log(req.body);
       return res.status(400).json({ error: 'Validation fails.' });
     }
 
